@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>پنلِ بازی‌های کولیبا — دمو</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --ink:#1B1330; --ink-2:#241a3d; --card:#2A2049; --card-2:#332658;
+    --gold:#F4B93E; --green:#3FBF7F; --coral:#EF5B5B; --pink:#FF7AA8;
+    --cream:#F5EFE6; --cream-dim:#c9c0d6; --line: rgba(245,239,230,0.14);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(60rem 40rem at 85% -10%, rgba(244,185,62,0.14), transparent 60%),
+      radial-gradient(50rem 35rem at -10% 30%, rgba(63,191,127,0.12), transparent 55%),
+      #0f0a1c;
+    font-family:'Vazirmatn', sans-serif;
+    padding:28px 12px;
+  }
+  a{color:inherit; text-decoration:none;}
+  button{font-family:inherit; border:none; cursor:pointer; background:none; color:inherit;}
+
+  .demo-tag{
+    position:fixed; top:14px; left:50%; transform:translateX(-50%);
+    background:var(--coral); color:#2a0d0d; font-weight:800; font-size:0.78rem;
+    padding:6px 16px; border-radius:999px; z-index:99;
+  }
+
+  /* ---------- phone frame (فقط برای تستِ خارج از تلگرام؛ داخلِ خودِ تلگرام حذف می‌شه) ---------- */
+  .phone{
+    width:390px; max-width:100%;
+    background:#100b1e; border-radius:44px; padding:14px;
+    box-shadow:0 40px 100px rgba(0,0,0,0.6), 0 0 0 8px rgba(255,255,255,0.02);
+  }
+  body.tg-mode{padding:0; display:block;}
+  body.tg-mode .demo-tag{display:none;}
+  body.tg-mode .phone{
+    width:100%; height:100vh; height:var(--tg-viewport-height, 100vh);
+    border-radius:0; padding:0; box-shadow:none; background:transparent;
+  }
+  body.tg-mode .screen{border-radius:0; height:100%;}
+
+  .screen{
+    background:var(--ink); color:var(--cream);
+    border-radius:32px; overflow:hidden;
+    height:760px; display:flex; flex-direction:column; position:relative;
+  }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 20px 14px;
+  }
+  .topbar .title{font-weight:800; font-size:1.15rem; display:flex; align-items:center; gap:8px;}
+  .back-btn{
+    width:34px; height:34px; border-radius:11px; background:var(--card);
+    display:flex; align-items:center; justify-content:center; font-size:1rem;
+    border:1px solid var(--line);
+  }
+  .coin-pill{
+    display:flex; align-items:center; gap:6px;
+    background:var(--card); border:1px solid var(--line);
+    padding:6px 12px; border-radius:999px; font-weight:700; font-size:0.86rem;
+  }
+  .kolicoin{
+    width:20px; height:20px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #ffe6a3, var(--gold));
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.62rem; font-weight:900; color:#2a1a06;
+    box-shadow:inset 0 0 0 2px rgba(0,0,0,0.15);
+  }
+
+  .content{flex:1; overflow-y:auto; padding:6px 20px 20px;}
+  .content::-webkit-scrollbar{width:0;}
+
+  /* ---------- bottom nav ---------- */
+  .bottomnav{
+    display:flex; border-top:1px solid var(--line);
+    background:rgba(16,11,30,0.9);
+  }
+  .navbtn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding:12px 0 16px; font-size:0.72rem; color:var(--cream-dim); font-weight:600;
+  }
+  .navbtn .ic{font-size:1.25rem;}
+  .navbtn.active{color:var(--gold);}
+
+  /* ---------- dashboard ---------- */
+  .hello{font-size:1.4rem; font-weight:800; margin:6px 0 2px;}
+  .sub{color:var(--cream-dim); font-size:0.88rem; margin-bottom:20px;}
+
+  .balance-card{
+    background:linear-gradient(135deg, var(--card-2), var(--card));
+    border:1px solid var(--line); border-radius:24px; padding:22px;
+    margin-bottom:16px;
+  }
+  .balance-card .lbl{font-size:0.82rem; color:var(--cream-dim); margin-bottom:6px;}
+  .balance-card .amt{font-size:2rem; font-weight:900; display:flex; align-items:center; gap:10px;}
+  .kolicoin.lg{width:32px; height:32px; font-size:0.9rem;}
+
+  .level-card{
+    background:var(--card); border:1px solid var(--line); border-radius:20px;
+    padding:18px 20px; margin-bottom:16px;
+  }
+  .level-card .row{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:0.88rem;}
+  .level-card .row b{color:var(--gold);}
+  .bar{height:8px; border-radius:99px; background:var(--ink-2); overflow:hidden;}
+  .bar i{display:block; height:100%; background:linear-gradient(90deg, var(--gold), var(--coral)); border-radius:99px;}
+
+  .quick-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .quick-cell{
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:16px; text-align:center; font-size:0.86rem; font-weight:700;
+  }
+  .quick-cell .ic{font-size:1.6rem; margin-bottom:6px;}
+
+  /* ---------- games grid ---------- */
+  .games-grid{display:flex; flex-direction:column; gap:14px;}
+  .game-cell{
+    display:flex; align-items:center; gap:16px;
+    background:var(--card); border:1px solid var(--line); border-radius:20px;
+    padding:18px; text-align:right; width:100%;
+  }
+  .game-cell .ic{
+    width:52px; height:52px; border-radius:16px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:1.6rem;
+  }
+  .game-cell.dooz .ic{background:rgba(244,185,62,0.18);}
+  .game-cell.chess .ic{background:rgba(245,239,230,0.1);}
+  .game-cell.penalty .ic{background:rgba(63,191,127,0.18);}
+  .game-cell .txt b{display:block; font-size:1rem; margin-bottom:3px;}
+  .game-cell .txt span{color:var(--cream-dim); font-size:0.8rem;}
+  .game-cell .arrow{margin-right:auto; color:var(--cream-dim);}
+
+  /* ---------- mode choice ---------- */
+  .mode-title{font-size:1.2rem; font-weight:800; margin:10px 0 20px; text-align:center;}
+  .mode-options{display:flex; flex-direction:column; gap:14px;}
+  .mode-card{
+    border:1.5px solid var(--line); border-radius:20px; padding:22px;
+    display:flex; flex-direction:column; gap:6px; width:100%; text-align:right;
+  }
+  .mode-card.normal{background:var(--card);}
+  .mode-card.bet{background:linear-gradient(135deg, rgba(244,185,62,0.16), var(--card));border-color:rgba(244,185,62,0.4);}
+  .mode-card .ic{font-size:1.7rem;}
+  .mode-card b{font-size:1.02rem;}
+  .mode-card span{color:var(--cream-dim); font-size:0.82rem;}
+
+  .withwho{display:flex; flex-direction:column; gap:14px; margin-top:6px;}
+  .who-card{
+    background:var(--card); border:1px solid var(--line); border-radius:20px;
+    padding:20px; display:flex; align-items:center; gap:14px; text-align:right; width:100%;
+  }
+  .who-card .ic{font-size:1.5rem;}
+
+  /* invite */
+  .invite-box{
+    background:var(--card); border:1px dashed var(--line); border-radius:18px;
+    padding:18px; text-align:center; margin:14px 0;
+  }
+  .invite-link{
+    background:var(--ink-2); border-radius:12px; padding:10px 14px;
+    font-size:0.78rem; color:var(--cream-dim); margin:12px 0; word-break:break-all;
+  }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:13px 22px; border-radius:14px; font-weight:700; font-size:0.92rem; width:100%;
+  }
+  .btn-gold{background:var(--gold); color:#241a06;}
+  .btn-outline{border:1.5px solid var(--line); color:var(--cream); background:transparent;}
+
+  .invite-msg{
+    background:var(--card-2); border:1px solid var(--line); border-radius:18px;
+    padding:16px; margin-top:16px;
+  }
+  .invite-msg .who{font-weight:700; margin-bottom:6px; font-size:0.9rem;}
+  .invite-msg p{font-size:0.85rem; color:var(--cream-dim); margin-bottom:12px;}
+
+  .loading-wrap{display:flex; flex-direction:column; align-items:center; gap:16px; padding:60px 0; text-align:center;}
+  .spinner{
+    width:44px; height:44px; border-radius:50%;
+    border:4px solid var(--card-2); border-top-color:var(--gold);
+    animation:spin 0.9s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .board-wrap{display:flex; flex-direction:column; align-items:center; gap:18px; padding:20px 0;}
+  .board{
+    width:230px; height:230px; border-radius:18px; background:var(--card);
+    display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:10px; border:1px solid var(--line);
+  }
+  .board .cell{background:var(--ink-2); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.5rem;}
+  .vs-badge{
+    display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line);
+    padding:10px 18px; border-radius:999px; font-weight:700; font-size:0.9rem;
+  }
+
+  /* ---------- زمینِ پنالتی ---------- */
+  .pitch{
+    width:100%; aspect-ratio:4/5; border-radius:20px; position:relative; overflow:hidden;
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 40px, transparent 40px 80px),
+      linear-gradient(180deg, #1f6b3f, #17512f);
+    border:1px solid var(--line);
+  }
+  .goal-net{
+    position:absolute; top:5%; left:15%; width:70%; height:22%;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.55) 0 1px, transparent 1px 10px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.55) 0 1px, transparent 1px 10px);
+    border:3px solid rgba(255,255,255,0.9); border-bottom:none; border-radius:4px 4px 0 0;
+  }
+  .box{position:absolute; top:5%; left:8%; width:84%; height:34%; border:2px solid rgba(255,255,255,0.55); border-top:none;}
+  .keeper{
+    position:absolute; top:15%; left:50%; transform:translateX(-50%);
+    font-size:2.1rem; z-index:3; transition:left 0.5s ease;
+  }
+  .ball{
+    position:absolute; bottom:8%; left:50%; transform:translate(-50%,0);
+    font-size:2.3rem; z-index:2; transition:all 0.55s cubic-bezier(.2,.7,.3,1);
+  }
+  .ball.shot-goal{bottom:20%; left:30%; transform:translate(-50%,0) scale(0.6);}
+  .ball.shot-saved{bottom:22%; left:50%; transform:translate(-50%,0) scale(0.65);}
+  .shoot-fx{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;}
+  .shoot-result{
+    font-weight:900; font-size:1.5rem; opacity:0; transition:opacity 0.3s;
+    text-shadow:0 2px 10px rgba(0,0,0,0.6);
+  }
+  .shoot-result.show{opacity:1;}
+  .shoot-result.goal{color:var(--gold);}
+  .shoot-result.saved{color:var(--coral);}
+
+  /* ---------- صفحه‌ی شطرنج ---------- */
+  .chessboard{
+    width:100%; max-width:310px; aspect-ratio:1; margin:0 auto;
+    display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+    border-radius:12px; overflow:hidden; border:3px solid var(--card-2);
+  }
+  .chessboard .sq{display:flex; align-items:center; justify-content:center; font-size:1.55rem; position:relative;}
+  .chessboard .sq.light{background:#EADFC7;}
+  .chessboard .sq.dark{background:#8C6B4A;}
+  .chessboard .sq.sel{box-shadow:inset 0 0 0 3px var(--gold);}
+  .chessboard .sq.hint::after{
+    content:''; position:absolute; width:22%; height:22%; border-radius:50%;
+    background:rgba(63,191,127,0.65);
+  }
+  .chessboard .pc{cursor:pointer; user-select:none; filter:drop-shadow(0 2px 2px rgba(0,0,0,0.35));}
+  .chessboard .pc.white{color:#fdfaf3;}
+  .chessboard .pc.black{color:#1a1420;}
+
+  /* ---------- profile ---------- */
+  .profile-head{display:flex; flex-direction:column; align-items:center; gap:10px; padding:14px 0 22px;}
+  .avatar{
+    width:74px; height:74px; border-radius:50%;
+    background:linear-gradient(135deg, var(--pink), var(--coral));
+    display:flex; align-items:center; justify-content:center; font-size:1.8rem;
+  }
+  .profile-head .nm{font-size:1.15rem; font-weight:800;}
+  .profile-head .id{color:var(--cream-dim); font-size:0.8rem;}
+  .stat-row{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:14px 18px; margin-bottom:10px; font-size:0.88rem;
+  }
+  .stat-row b{color:var(--gold);}
+
+  .toast{
+    position:absolute; bottom:90px; left:50%; transform:translateX(-50%);
+    background:var(--green); color:#0c2b1a; font-weight:700; font-size:0.82rem;
+    padding:10px 20px; border-radius:999px; opacity:0; pointer-events:none;
+    transition:opacity 0.25s;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="demo-tag" id="demoTag">دمو — بک‌اندِ واقعی هنوز وصل نیست</div>
+
+<div class="phone">
+  <div class="screen" id="screen">
+    <!-- محتوا با جاوااسکریپت ساخته می‌شه -->
+  </div>
+</div>
+
+<script>
+// ⚠️ بعد از دیپلوی‌کردنِ سرویسِ بک‌اند (webapp_backend.py) رو Railway، آدرسش رو اینجا بذار:
+const BACKEND_URL = "https://REPLACE-WITH-YOUR-BACKEND.up.railway.app";
+
+const state = {
+  screen: 'home',
+  coins: 0,
+  xp: 0,
+  profile: null,
+  selectedGame: null,
+  mode: null,
+  betAmount: 10,
+  tgUser: null,
+  tgInitData: null,
+  gameId: null,
+  gameData: null,
+  pollTimer: null,
+  inviteLink: null,
+  inviteLoading: false,
+  waitingLoading: false,
+  chess: null,
+};
+
+async function api(path, body){
+  const res = await fetch(BACKEND_URL + path, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(Object.assign({initData: state.tgInitData || ''}, body || {})),
+  });
+  return res.json();
+}
+async function apiGet(path){
+  const res = await fetch(BACKEND_URL + path);
+  return res.json();
+}
+
+function setConnectionTag(text, ok){
+  const tag = document.getElementById('demoTag');
+  if(!tag) return;
+  tag.textContent = text;
+  tag.style.background = ok ? 'var(--green)' : 'var(--coral)';
+  tag.style.color = ok ? '#0c2b1a' : '#2a0d0d';
+}
+
+function loadDemoProfile(){
+  state.profile = {
+    kolicoin:42, xp:340, level:2, wins:18, losses:9, bot_level:12, math_level:4, joined_at:'۱۴۰۳/۰۵/۱۲ (نمونه)',
+    missions: {
+      join: {reward:1, claimed:true},
+      five_games: {reward:5, claimed:true, progress:5, target:5},
+      ten_games: {reward:15, claimed:false, progress:6, target:10},
+    },
+  };
+  state.coins = 42; state.xp = 340;
+}
+
+async function authenticate(){
+  try{
+    const profile = await api('/api/auth', {});
+    if(profile.error) throw new Error(profile.error);
+    state.profile = profile;
+    state.coins = profile.kolicoin;
+    state.xp = profile.xp;
+    setConnectionTag('وصل به بک‌اندِ واقعی ✅', true);
+  }catch(e){
+    setConnectionTag('⚠️ بک‌اند دیپلوی نشده - حالتِ نمونه', false);
+    loadDemoProfile();
+  }
+  render();
+}
+
+// ---------------------------------------------------------------------------
+// راه‌اندازیِ Telegram Web App
+// اگه این صفحه از طریقِ دکمه‌ی web_app داخلِ خودِ تلگرام باز شده باشه، window.Telegram.WebApp
+// وجود داره و initDataUnsafe.user همون کاربرِ واقعیه (آیدی، اسم، یوزرنیم، عکس). اگه از یه
+// مرورگرِ معمولی باز بشه (مثلِ همین تست)، Telegram تعریف نمی‌شه و می‌ریم رو حالتِ دمو/نمونه.
+// ---------------------------------------------------------------------------
+function initTelegram(){
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if(!tg){
+    loadDemoProfile();
+    return; // باز شده تو یه مرورگرِ عادی، نه داخلِ تلگرام - حالتِ دمو
+  }
+  tg.ready();
+  tg.expand();
+  try { tg.disableVerticalSwipes(); } catch(e){}
+  document.body.classList.add('tg-mode');
+  document.documentElement.style.setProperty('--tg-viewport-height', tg.viewportStableHeight + 'px');
+  tg.onEvent('viewportChanged', ()=>{
+    document.documentElement.style.setProperty('--tg-viewport-height', tg.viewportStableHeight + 'px');
+  });
+
+  state.tgInitData = tg.initData;
+  const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
+  if(u){ state.tgUser = u; }
+
+  authenticate().then(()=>{
+    const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param;
+    if(startParam){ joinGameById(startParam); }
+  });
+
+  // دکمه‌ی برگشتِ خودِ تلگرام رو هم به ناوبریِ داخلیِ خودمون وصل می‌کنیم
+  tg.BackButton.onClick(()=>{
+    if(state.screen === 'home'){ tg.close(); return; }
+    const backMap = {
+      games:'home', mode:'games', betamount:'mode', withwho:'mode', invite:'withwho',
+      waiting:'withwho', board:'home', profile:'home',
+    };
+    stopPolling();
+    go(backMap[state.screen] || 'home');
+  });
+}
+
+function syncBackButton(){
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if(!tg) return;
+  if(state.screen === 'home') tg.BackButton.hide();
+  else tg.BackButton.show();
+}
+
+const GAMES = {
+  dooz:   {label:'دوز',      icon:'⭕❌', cls:'dooz'},
+  chess:  {label:'شطرنج',    icon:'♟️',  cls:'chess'},
+  penalty:{label:'پنالتی',   icon:'⚽',  cls:'penalty'},
+};
+
+const XP_PER_LEVEL = 200;
+const MAX_LEVEL = 50;
+function levelInfo(xp){
+  const level = Math.min(MAX_LEVEL, 1 + Math.floor(xp / XP_PER_LEVEL));
+  const inLevel = xp % XP_PER_LEVEL;
+  const pct = level >= MAX_LEVEL ? 100 : Math.round((inLevel / XP_PER_LEVEL) * 100);
+  return {level, pct};
+}
+
+function go(screen){
+  if(state.screen === 'board' && screen !== 'board') stopPolling();
+  state.screen = screen;
+  render();
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1600);
+}
+
+function topBar(title, back){
+  return `<div class="topbar">
+    ${back ? `<button class="back-btn" onclick="${back}">←</button>` : `<span style="width:34px"></span>`}
+    <div class="title">${title}</div>
+    <div class="coin-pill"><span class="kolicoin">K</span> ${state.coins}</div>
+  </div>`;
+}
+
+function bottomNav(){
+  const items = [
+    {key:'home', ic:'🏠', lb:'خانه'},
+    {key:'games', ic:'🎮', lb:'بازی‌ها'},
+    {key:'profile', ic:'📊', lb:'آمار شما'},
+  ];
+  return `<div class="bottomnav">
+    ${items.map(it => `
+      <button class="navbtn ${state.screen===it.key || (it.key==='games' && ['mode','betamount','withwho','invite','waiting','board'].includes(state.screen)) ? 'active':''}"
+        onclick="go('${it.key}')">
+        <span class="ic">${it.ic}</span>${it.lb}
+      </button>`).join('')}
+  </div>`;
+}
+
+function renderMissionsCard(){
+  const m = state.profile && state.profile.missions;
+  if(!m) return '';
+  const rows = [
+    {key:'join', label:'🚪 ورود به پنل', reward:m.join.reward, claimed:m.join.claimed, progressText: m.join.claimed ? 'گرفته شد' : 'در انتظار'},
+    {key:'five', label:'🎮 ۵ بازی', reward:m.five_games.reward, claimed:m.five_games.claimed, progressText: `${m.five_games.progress}/${m.five_games.target}`},
+    {key:'ten', label:'🏅 ۱۰ بازی', reward:m.ten_games.reward, claimed:m.ten_games.claimed, progressText: `${m.ten_games.progress}/${m.ten_games.target}`},
+  ];
+  return `
+    <div class="level-card">
+      <div class="row" style="margin-bottom:12px;"><span>🎯 ماموریت‌ها</span></div>
+      ${rows.map(r => `
+        <div class="row" style="font-size:0.82rem; ${r.claimed ? 'opacity:0.55;' : ''}">
+          <span>${r.label}</span>
+          <b>${r.claimed ? '✅ گرفته شد' : `+${r.reward} 🪙 (${r.progressText})`}</b>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderHome(){
+  const {level, pct} = levelInfo(state.xp);
+  return `
+    ${topBar('کولیبا 🌸')}
+    <div class="content">
+      <div class="hello">سلام، رفیق! 👋</div>
+      <div class="sub">آماده‌ی یه بازیِ دیگه‌ای؟</div>
+
+      <div class="balance-card">
+        <div class="lbl">موجودیِ کولی‌کوین</div>
+        <div class="amt"><span class="kolicoin lg">K</span> ${state.coins}</div>
+      </div>
+
+      <div class="level-card">
+        <div class="row"><span>سطحِ بازی</span><b>سطح ${level} از ${MAX_LEVEL}</b></div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+      </div>
+
+      ${renderMissionsCard()}
+
+      <div class="quick-grid">
+        <button class="quick-cell" onclick="go('games')"><div class="ic">🎮</div>بازی جدید</button>
+        <button class="quick-cell" onclick="go('profile')"><div class="ic">📊</div>آمارِ من</button>
+      </div>
+    </div>
+    ${bottomNav()}
+  `;
+}
+
+function renderGames(){
+  return `
+    ${topBar('بازی‌ها')}
+    <div class="content">
+      <div class="games-grid">
+        ${Object.entries(GAMES).map(([key,g]) => `
+          <button class="game-cell ${g.cls}" onclick="selectGame('${key}')">
+            <div class="ic">${g.icon}</div>
+            <div class="txt"><b>${g.label}</b><span>با دوست یا رندوم بازی کن</span></div>
+            <div class="arrow">‹</div>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+    ${bottomNav()}
+  `;
+}
+function selectGame(key){ state.selectedGame = key; go('mode'); }
+
+function renderMode(){
+  const g = GAMES[state.selectedGame];
+  return `
+    ${topBar(g.label, "go('games')")}
+    <div class="content">
+      <div class="mode-title">می‌خوای عادی بازی کنی یا شرطی؟</div>
+      <div class="mode-options">
+        <button class="mode-card normal" onclick="chooseMode('normal')">
+          <div class="ic">🎲</div><b>عادی</b><span>فقط برای سرگرمی، بدون سکه</span>
+        </button>
+        <button class="mode-card bet" onclick="chooseMode('bet')">
+          <div class="ic">🪙</div><b>شرطی</b><span>هر دو نفر کولی‌کوین شرط می‌بندن؛ برنده می‌بره</span>
+        </button>
+      </div>
+    </div>
+    ${bottomNav()}
+  `;
+}
+function chooseMode(m){ state.mode = m; go(m==='bet' ? 'betamount' : 'withwho'); }
+
+function renderBetAmount(){
+  const g = GAMES[state.selectedGame];
+  const amounts = [5,10,20,50];
+  return `
+    ${topBar(g.label, "go('mode')")}
+    <div class="content">
+      <div class="mode-title">چقدر کولی‌کوین شرط ببندیم؟</div>
+      <div class="mode-options">
+        ${amounts.map(a=>`
+          <button class="who-card" onclick="setBetAmount(${a})">
+            <div class="ic">🪙</div><div><b>${a} کولی‌کوین</b></div>
+          </button>
+        `).join('')}
+      </div>
+      <div style="text-align:center; color:var(--cream-dim); font-size:0.82rem; margin-top:10px;">موجودیِ فعلیت: ${state.coins} کولی‌کوین</div>
+    </div>
+    ${bottomNav()}
+  `;
+}
+function setBetAmount(a){
+  if(a > state.coins){ toast('همین‌قدر کولی‌کوین نداری!'); return; }
+  state.betAmount = a;
+  go('withwho');
+}
+
+function renderWithWho(){
+  const g = GAMES[state.selectedGame];
+  return `
+    ${topBar(g.label, "go('mode')")}
+    <div class="content">
+      <div class="mode-title">با کی بازی کنیم؟</div>
+      <div class="withwho">
+        <button class="who-card" onclick="createFriendGame()"><div class="ic">👥</div><div><b>با دوست</b><br><span style="color:var(--cream-dim); font-size:0.8rem;">یه لینکِ دعوتِ واقعی می‌سازیم</span></div></button>
+        <button class="who-card" onclick="createRandomGame()"><div class="ic">🎲</div><div><b>رندوم</b><br><span style="color:var(--cream-dim); font-size:0.8rem;">به همه‌ی گروه‌های ربات اعلام می‌شه</span></div></button>
+      </div>
+    </div>
+    ${bottomNav()}
+  `;
+}
+
+async function createFriendGame(){
+  state.screen = 'invite';
+  state.inviteLoading = true;
+  render();
+  let res;
+  try{
+    res = await api('/api/game/create', {game_type: state.selectedGame, mode: state.mode, bet_amount: state.betAmount, target: 'friend'});
+  }catch(e){
+    state.inviteLoading = false;
+    toast('⚠️ اتصال به بک‌اند برقرار نشد. BACKEND_URL درست تنظیم شده؟');
+    go('withwho');
+    return;
+  }
+  state.inviteLoading = false;
+  if(res.error){ toast('خطا: ' + res.error); go('withwho'); return; }
+  state.gameId = res.game_id;
+  state.inviteLink = res.invite_link;
+  render();
+  startPolling();
+}
+
+async function createRandomGame(){
+  state.screen = 'waiting';
+  state.waitingLoading = true;
+  render();
+  let res;
+  try{
+    res = await api('/api/game/create', {game_type: state.selectedGame, mode: state.mode, bet_amount: state.betAmount, target: 'random'});
+  }catch(e){
+    state.waitingLoading = false;
+    toast('⚠️ اتصال به بک‌اند برقرار نشد. BACKEND_URL درست تنظیم شده؟');
+    go('withwho');
+    return;
+  }
+  state.waitingLoading = false;
+  if(res.error){
+    const msg = res.error === 'bot_username_not_configured'
+      ? '⚠️ BOT_USERNAME رو تو بک‌اند تنظیم نکردی'
+      : 'خطا: ' + res.error;
+    toast(msg);
+    go('withwho');
+    return;
+  }
+  state.gameId = res.game_id;
+  if(res.broadcast){
+    const b = res.broadcast;
+    toast(b.sent > 0 ? `📨 به ${b.sent} از ${b.total} گروه فرستاده شد` : `⚠️ به هیچ گروهی نرسید (${b.last_error || 'دلیلِ نامشخص'})`);
+  }
+  render();
+  startPolling();
+}
+
+async function joinGameById(gameId){
+  let res;
+  try{
+    res = await api('/api/game/join', {game_id: gameId});
+  }catch(e){
+    toast('⚠️ اتصال به بک‌اند برقرار نشد.');
+    return;
+  }
+  if(res.error){ toast('این بازی دیگه در دسترس نیست.'); return; }
+  const g = await apiGet('/api/game/' + gameId + '/state');
+  state.gameId = gameId;
+  state.gameData = g;
+  state.selectedGame = g.game_type;
+  state.mode = g.mode;
+  state.betAmount = g.bet_amount;
+  go('board');
+  startPolling();
+}
+
+function startPolling(){
+  stopPolling();
+  state.pollTimer = setInterval(async ()=>{
+    if(!state.gameId) return;
+    const g = await apiGet('/api/game/' + state.gameId + '/state');
+    if(g.error) return;
+    state.gameData = g;
+    if(g.status === 'active' && (state.screen === 'invite' || state.screen === 'waiting')){
+      go('board');
+    } else if(state.screen === 'board'){
+      render();
+      if(g.status === 'finished') stopPolling();
+    }
+  }, 1800);
+}
+function stopPolling(){
+  if(state.pollTimer){ clearInterval(state.pollTimer); state.pollTimer = null; }
+}
+
+function renderInvite(){
+  const g = GAMES[state.selectedGame];
+  if(state.inviteLoading){
+    return `
+      ${topBar(g.label, "go('withwho')")}
+      <div class="content"><div class="loading-wrap"><div class="spinner"></div><div>در حال ساختنِ لینکِ دعوت...</div></div></div>
+      ${bottomNav()}
+    `;
+  }
+  return `
+    ${topBar(g.label, "go('withwho')")}
+    <div class="content">
+      <div class="invite-box">
+        <div style="font-weight:700; margin-bottom:4px;">لینکِ دعوتت آماده‌ست 🎉</div>
+        <div style="color:var(--cream-dim); font-size:0.82rem;">این لینک رو برای دوستت تو تلگرام بفرست؛ همین که بازش کنه، خودکار وارد بازی می‌شه</div>
+        <div class="invite-link">${state.inviteLink || ''}</div>
+        <button class="btn btn-gold" onclick="copyInviteLink()">📋 کپی کردنِ لینک</button>
+      </div>
+      <div style="text-align:center; color:var(--cream-dim); font-size:0.82rem;">⏳ منتظرِ ملحق‌شدنِ دوستتیم...</div>
+    </div>
+    ${bottomNav()}
+  `;
+}
+
+function copyInviteLink(){
+  if(!state.inviteLink) return;
+  navigator.clipboard.writeText(state.inviteLink).then(()=>toast('لینک کپی شد! 📋'));
+}
+
+function renderWaiting(){
+  const g = GAMES[state.selectedGame];
+  if(state.waitingLoading){
+    return `
+      ${topBar(g.label, "go('withwho')")}
+      <div class="content"><div class="loading-wrap"><div class="spinner"></div><div>در حال فرستادنِ درخواست به گروه‌ها...</div></div></div>
+      ${bottomNav()}
+    `;
+  }
+  return `
+    ${topBar(g.label, "go('withwho')")}
+    <div class="content">
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <div>درخواست به همه‌ی گروه‌های ربات فرستاده شد 📨<br>منتظرِ قبول‌کردنِ یه نفر هستیم...</div>
+      </div>
+    </div>
+    ${bottomNav()}
+  `;
+}
+
+function renderBoard(){
+  const g = GAMES[state.selectedGame];
+  const gd = state.gameData;
+  let inner;
+  if(state.selectedGame === 'dooz'){
+    inner = renderDoozReal();
+  } else if(state.selectedGame === 'penalty'){
+    inner = renderPenaltyPitch() + `<div style="color:var(--coral); font-size:0.78rem;">🚧 موتورِ آنلاینِ پنالتی هنوز وصل نشده؛ فقط نمایشیه.</div>`;
+  } else if(state.selectedGame === 'chess'){
+    inner = renderChessBoard() + `<div style="color:var(--coral); font-size:0.78rem;">🚧 موتورِ آنلاینِ شطرنج هنوز وصل نشده؛ فقط نمایشیه.</div>`;
+  }
+  const vsLine = gd ? `${gd.creator_name || 'بازیکن ۱'} 🆚 ${gd.opponent_name || '...'}` : `${g.icon} در حالِ آماده‌سازی...`;
+  return `
+    ${topBar(g.label, "go('home')")}
+    <div class="content">
+      <div class="board-wrap">
+        <div class="vs-badge">${vsLine}</div>
+        ${inner}
+        ${state.mode==='bet' && gd ? `<div class="coin-pill">🪙 شرط: ${gd.bet_amount} کولی‌کوین</div>` : ''}
+      </div>
+    </div>
+    ${bottomNav()}
+  `;
+}
+
+function renderDoozReal(){
+  const gd = state.gameData;
+  if(!gd) return `<div class="loading-wrap"><div class="spinner"></div></div>`;
+  const cells = (gd.state && gd.state.cells) || Array(9).fill('');
+  const myId = state.tgUser ? state.tgUser.id : null;
+  const isMyTurn = gd.turn === myId;
+  let statusLine;
+  if(gd.status === 'finished'){
+    if(gd.winner_id === myId) statusLine = '🏆 بردی!';
+    else if(gd.winner_id) statusLine = '😅 باختی.';
+    else statusLine = '🤝 مساوی شد.';
+  } else {
+    statusLine = isMyTurn ? '🟢 نوبتِ توئه، بزن!' : '⏳ نوبتِ حریفه...';
+  }
+  return `
+    <div class="board">
+      ${cells.map((v,i)=>`<div class="cell" onclick="doozMove(${i})">${v==='X'?'❌':(v==='O'?'⭕':'')}</div>`).join('')}
+    </div>
+    <div style="color:var(--cream-dim); font-size:0.85rem;">${statusLine}</div>
+  `;
+}
+
+async function doozMove(cell){
+  const gd = state.gameData;
+  const myId = state.tgUser ? state.tgUser.id : null;
+  if(!gd || gd.status !== 'active' || gd.turn !== myId) return;
+  if((gd.state.cells || [])[cell]) return;
+  const res = await api('/api/game/' + state.gameId + '/move', {cell});
+  if(res.error){ toast('حرکتِ نامعتبر'); return; }
+  const g = await apiGet('/api/game/' + state.gameId + '/state');
+  state.gameData = g;
+  render();
+}
+
+/* ---------------- پنالتی: زمینِ واقعی با دروازه‌بان و شوت ---------------- */
+function renderPenaltyPitch(){
+  return `
+    <div class="pitch">
+      <div class="goal-net"></div>
+      <div class="box"></div>
+      <div class="keeper" id="keeper" style="left:50%;">🧍‍♂️</div>
+      <div class="ball" id="ball">⚽</div>
+      <div class="shoot-fx"><div class="shoot-result" id="shootResult"></div></div>
+    </div>
+    <button class="btn btn-gold" id="shootBtn" onclick="doShoot()">🦵 شوت کن</button>
+    <div style="color:var(--cream-dim); font-size:0.8rem;">توپ جلوی توئه؛ بزن رو دروازه، ببین گلر می‌گیره یا نه!</div>
+  `;
+}
+
+function doShoot(){
+  const btn = document.getElementById('shootBtn');
+  const keeper = document.getElementById('keeper');
+  const ball = document.getElementById('ball');
+  const resultEl = document.getElementById('shootResult');
+  if(!btn || btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  const keeperSpots = [25, 50, 75];
+  const keeperGoesTo = keeperSpots[Math.floor(Math.random()*keeperSpots.length)];
+  keeper.style.left = keeperGoesTo + '%';
+
+  // دقیقاً همون احتمالِ خودِ ربات: مقدار ۴ یا ۵ از ۱ تا ۵ یعنی گل (۴۰٪ گل)
+  const isGoal = Math.floor(Math.random()*5) + 1 >= 4;
+
+  setTimeout(()=>{
+    if(isGoal){
+      const goalSpot = keeperGoesTo <= 50 ? 78 : 22;
+      ball.style.left = goalSpot + '%';
+      ball.classList.add('shot-goal');
+      resultEl.textContent = '⚽🥅 گل شد!';
+      resultEl.className = 'shoot-result show goal';
+    } else {
+      ball.style.left = keeperGoesTo + '%';
+      ball.classList.add('shot-saved');
+      resultEl.textContent = '🧤 گلر گرفت!';
+      resultEl.className = 'shoot-result show saved';
+    }
+  }, 60);
+
+  setTimeout(()=>{
+    btn.disabled = false;
+    btn.textContent = '🔁 یه شوتِ دیگه';
+    ball.style.left = '50%';
+    ball.classList.remove('shot-goal','shot-saved');
+    keeper.style.left = '50%';
+    resultEl.classList.remove('show');
+  }, 2000);
+}
+
+/* ---------------- شطرنج: صفحه‌ی واقعی با مهره‌های یونیکد ---------------- */
+const START_CHESS = [
+  ['♜','♞','♝','♛','♚','♝','♞','♜'],
+  ['♟','♟','♟','♟','♟','♟','♟','♟'],
+  ['','','','','','','',''],
+  ['','','','','','','',''],
+  ['','','','','','','',''],
+  ['','','','','','','',''],
+  ['♙','♙','♙','♙','♙','♙','♙','♙'],
+  ['♖','♘','♗','♕','♔','♗','♘','♖'],
+];
+const WHITE_PIECES = new Set(['♙','♖','♘','♗','♕','♔']);
+
+function renderChessBoard(){
+  if(!state.chess){ state.chess = {board: START_CHESS.map(r=>r.slice()), selected:null}; }
+  const {board, selected} = state.chess;
+  let cells = '';
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      const isLight = (r+c)%2===0;
+      const piece = board[r][c];
+      const isSel = selected && selected[0]===r && selected[1]===c;
+      const colorCls = piece ? (WHITE_PIECES.has(piece) ? 'white':'black') : '';
+      cells += `<div class="sq ${isLight?'light':'dark'} ${isSel?'sel':''}" onclick="chessClick(${r},${c})">
+        ${piece ? `<span class="pc ${colorCls}">${piece}</span>` : ''}
+      </div>`;
+    }
+  }
+  return `
+    <div class="chessboard" dir="ltr">${cells}</div>
+    <div style="color:var(--cream-dim); font-size:0.8rem;">یه مهره رو بزن، بعد خونه‌ی مقصد رو بزن (نمایشِ نمونه‌ی جابه‌جایی)</div>
+  `;
+}
+
+function chessClick(r,c){
+  const chess = state.chess;
+  const piece = chess.board[r][c];
+  if(chess.selected){
+    const [sr,sc] = chess.selected;
+    if(sr===r && sc===c){ chess.selected = null; }
+    else {
+      chess.board[r][c] = chess.board[sr][sc];
+      chess.board[sr][sc] = '';
+      chess.selected = null;
+    }
+  } else if(piece){
+    chess.selected = [r,c];
+  }
+  render();
+}
+
+function renderProfile(){
+  const {level, pct} = levelInfo(state.xp);
+  const u = state.tgUser;
+  const p = state.profile || {};
+  const displayName = u ? [u.first_name, u.last_name].filter(Boolean).join(' ') : 'آریا (نمونه)';
+  const displayId = u ? '#' + u.id : '#84213077 (نمونه)';
+  const avatarLetter = u ? (u.first_name ? u.first_name[0] : '👤') : '👤';
+  const joinedAt = p.joined_at || '—';
+  const botLevel = p.bot_level != null ? p.bot_level : '—';
+  const mathLevel = p.math_level != null ? p.math_level : '—';
+  const wins = p.wins != null ? p.wins : 0;
+  const losses = p.losses != null ? p.losses : 0;
+  return `
+    ${topBar('آمار شما')}
+    <div class="content">
+      <div class="profile-head">
+        <div class="avatar">${avatarLetter}</div>
+        <div class="nm">${displayName}</div>
+        <div class="id">${displayId}</div>
+      </div>
+      <div class="stat-row"><span>تاریخِ عضویت</span><b>${joinedAt}</b></div>
+      <div class="stat-row"><span>موجودیِ کولی‌کوین</span><b>${state.coins}</b></div>
+      <div class="stat-row"><span>امتیازِ بازی (XP)</span><b>${state.xp}</b></div>
+      <div class="stat-row"><span>سطحِ بازی</span><b>سطح ${level} از ${MAX_LEVEL}</b></div>
+      <div class="bar" style="margin-bottom:14px;"><i style="width:${pct}%"></i></div>
+      <div class="stat-row"><span>سطحِ کلیِ ربات</span><b>سطح ${botLevel}</b></div>
+      <div class="stat-row"><span>سطحِ ریاضی</span><b>سطح ${mathLevel}</b></div>
+      <div class="stat-row"><span>بردها / باخت‌ها</span><b>${wins} / ${losses}</b></div>
+      ${!u ? `<div style="color:var(--cream-dim); font-size:0.76rem; text-align:center; margin-top:10px;">این آمار نمونه‌ست؛ وقتی از داخلِ تلگرام باز بشه و بک‌اند وصل بشه، واقعی می‌شه.</div>` : ''}
+    </div>
+    ${bottomNav()}
+  `;
+}
+
+function render(){
+  const map = {
+    home: renderHome, games: renderGames, mode: renderMode, betamount: renderBetAmount,
+    withwho: renderWithWho, invite: renderInvite, waiting: renderWaiting,
+    board: renderBoard, profile: renderProfile,
+  };
+  document.getElementById('screen').innerHTML = map[state.screen]() + `<div class="toast" id="toast"></div>`;
+  syncBackButton();
+}
+loadDemoProfile();
+initTelegram();
+render();
+</script>
+</body>
+</html>
